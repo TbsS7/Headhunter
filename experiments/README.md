@@ -1,6 +1,6 @@
 # Experiment scripts
 
-> These scripts call the **v0.11 API in Portuguese** (`hh.carregar`, `hh.analisar`, ...). To rerun them, use the library at tag `v0.11.5` (`pip install git+https://github.com/TbsS7/Headhunter.git@v0.11.5`). The v0.12 names are listed in `CHANGELOG.md`.
+> These scripts call the **v0.11 API in Portuguese** (`hh.carregar`, `hh.analisar`, ...). To rerun them, use the library at tag `v0.11.5` (`pip install git+https://github.com/TbsS7/Headhunter.git@v0.11.5`, or `@e9f2bd3` if the tag is missing). The v0.12 names are listed in `CHANGELOG.md`.
 
 These are **notebook-cell scripts** (Jupyter/RunPod), not command-line programs: they contain `!pip` and `!nvidia-smi` lines and are meant to be pasted cell by cell, in order. Cells are separated by `# ===== CÉLULA n ... =====` headers. The predictions are written at the top of each file, before the results.
 
