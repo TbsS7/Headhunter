@@ -1,0 +1,9 @@
+# Tested with TransformerLens 3.9 (the library needs transformer_lens < 4)
+torch
+numpy
+pandas
+scipy
+transformers
+huggingface_hub
+safetensors
+transformer_lens<4

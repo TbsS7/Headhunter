@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "headhunter-circuits"
+version = "0.11.5"
+description = "HeadHunter: find sufficient circuits (attention heads, MLPs, edges) in transformers at a cost that does not grow with the number of heads"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Theo Brusco Sato" }]
+dependencies = [
+  "torch",
+  "numpy",
+  "pandas",
+  "scipy",
+  "transformers",
+  "huggingface_hub",
+  "safetensors",
+  "transformer_lens<4",
+]
+
+[project.optional-dependencies]
+test = ["pytest", "tokenizers"]
+
+[tool.setuptools]
+py-modules = ["headhunter"]

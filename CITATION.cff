@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below until the paper is out."
+title: "HeadHunter: cheap sufficient circuits at scale"
+version: 0.11.5
+date-released: 2026-11-12
+authors:
+  - family-names: "Brusco Sato"
+    given-names: "Theo"
+license: MIT
+repository-code: "https://github.com/TbsS7/Headhunter"
