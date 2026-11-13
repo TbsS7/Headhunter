@@ -8,7 +8,7 @@
 - Comments, docstrings and printed messages are in English.
 - Added a GitHub Actions workflow that runs the CPU tests.
 
-Main result keys: `cabecas` -> `heads`, `nucleo` -> `core`, `circuito` -> `circuit`, `fidelidade` -> `faithfulness`, `arestas` -> `edges`, `tempo` -> `elapsed`, `atingiu` -> `reached`, `alvo` -> `target`, `errado` -> `wrong`.
+Main result keys: `cabecas` -> `heads`, `nucleo` -> `core`, `circuito` -> `circuit`, `fidelidade` -> `faithfulness`, `arestas` -> `edges`, `tempo` -> `elapsed`, `atingiu` -> `reached`, `alvo` -> `target`, `errado` -> `wrong`, `tarefa` -> `task` (as a result key; the function `tarefa` is `get_task`).
 
 <details><summary>Renamed public functions</summary>
 

@@ -395,7 +395,7 @@ def regression(m, name, task_name, seeds=(0, 1, 2), n=40, n_batch=10, bf16=False
     f_core = faithfulness_batches(m, batches, Cs, core, mlp5)
     f_1 = faithfulness_batches(m, batches, Cs, [int(i) for i in np.where(rel >= 0.01)[0]], range(nL))
     ref = REFERENCE.get((name, task_name))
-    out = dict(model=name, get_task=task_name, core=len(core), mlps=mlp5, faith_core=round(f_core, 2),
+    out = dict(model=name, task=task_name, core=len(core), mlps=mlp5, faith_core=round(f_core, 2),
                faith_1pct=round(f_1, 2), seconds=round(time.time() - t0, 1))
     if ref:
         out["bate"] = (out["core"] == ref["core"] and out["mlps"] == ref["mlps"]
@@ -897,12 +897,12 @@ def search_noise(m, task_name, eval_sets=5, n=40, n_batch=10, target=0.90, verbo
     overlap = len(set(orders["A"][:kA]) & set(orders["B"][:kB])) / max(1, min(kA, kB))
     cv = list(curve.items()); drops = [(k1, k2, round(f1 - f2, 3)) for (k1, f1), (k2, f2) in zip(cv, cv[1:]) if f2 < f1 - 0.02]
     first = next((k for k, f in cv if f >= target), None)
-    r = dict(get_task=task_name if isinstance(task_name, str) else "custom", N=N, rows=rows, summary=summary,
+    r = dict(task=task_name if isinstance(task_name, str) else "custom", N=N, rows=rows, summary=summary,
              k_double_sentences=bg["k"], faith_double=round(bg["faithfulness"], 3), overlap_AB=round(overlap, 2),
              curve={int(k): round(float(f), 3) for k, f in curve.items()}, drops=drops, first_k_on_curve=first,
              k_search=kA, elapsed=round(time.time() - t0, 1))
     if verbose:
-        print(f"=== search noise: {m.cfg.model_name} / {r['get_task']} (target {target:.0%}, {N} heads) ===")
+        print(f"=== search noise: {m.cfg.model_name} / {r['task']} (target {target:.0%}, {N} heads) ===")
         for o, s in summary.items():
             print(f"order {o}: k = {s['mean']:.0f} ± {s['sd']:.0f}  (min {s['min']}, max {s['max']})  on {eval_sets} groups of {n} sentences")
         print(f"with {2 * n} sentences: k = {bg['k']} (faith. {bg['faithfulness']:.0%}) | overlap of heads A x B: {overlap:.0%}")
@@ -1071,7 +1071,7 @@ def circuit_range(m, task_name, groups=5, goals=(0.80, 0.90, 0.95), n=40, n_batc
         for goal, s in r.items():
             print(f"target {goal:.0%}: k = {s['median']:.0f}  (range {s['min']}-{s['max']}, ±{(s['max'] - s['min']) / 2 / max(s['median'], 1):.0%})")
         print(f"time: {time.time() - t0:.1f} s")
-    return dict(get_task=task_name, order=order, goals=r, elapsed=round(time.time() - t0, 1))
+    return dict(task=task_name, order=order, goals=r, elapsed=round(time.time() - t0, 1))
 
 
 # =====================================================================================
@@ -1180,7 +1180,7 @@ def circuit_with_mlps(m, task_name, target=0.90, mlp_target=0.97, n=40, n_batch=
     fv_all = faithfulness_batches(m, lv, Cv, oc[:b_all["k"]], range(nL))
     fv_pod = faithfulness_batches(m, lv, Cv, oc[:b_pod["k"]], mlps); del Cv
     gc.collect(); torch.cuda.empty_cache() if DEV == "cuda" else None
-    r = dict(get_task=task_name, mlps=mlps, n_mlps=len(mlps), faith_mlps_all_heads=f_mlp,
+    r = dict(task=task_name, mlps=mlps, n_mlps=len(mlps), faith_mlps_all_heads=f_mlp,
              heads_all_mlps=b_all["k"], heads_mlps_pruned=b_pod["k"], reached=b_pod["reached"],
              faith_new_all=fv_all, faith_new_pruned=fv_pod, order_mlps=om, elapsed=round(time.time() - t0, 1))
     if verbose:
@@ -1296,7 +1296,7 @@ def necessity(m, task_name, n=40, damage_target=0.80, verbose=True):
         if k not in eval: eval[k] = (p0 - _prob_with_ablation(m, T, means, order[:k])) / max(p0 - p_all, 1e-9)
         return eval[k]
     hi = next((k for k in range(1, nL * nH + 1) if damage(k) >= damage_target), nL * nH)   # sweep: the damage is not monotonic
-    r = dict(get_task=task_name, p0=p0, p_all=p_all, k_damage=hi, damage=damage(hi), top=[name(c) for c in order[:10]],
+    r = dict(task=task_name, p0=p0, p_all=p_all, k_damage=hi, damage=damage(hi), top=[name(c) for c in order[:10]],
              damage_top1=damage(1), elapsed=round(time.time() - t0, 1))
     if verbose:
         print(f"necessity ({m.cfg.model_name} / {task_name}): p0 = {p0:.2f}, all ablated = {p_all:.2f} | "
@@ -1348,7 +1348,7 @@ def validate_circuit(m, task_name, r=None, groups=3, n=40, n_batch=10, draws=5, 
     from scipy.stats import spearmanr
     rho = float(spearmanr([eap[a] for a in sample], [exact[a] for a in sample])[0])
     del C0; gc.collect(); torch.cuda.empty_cache() if DEV == "cuda" else None
-    res = dict(get_task=task_name, k=k, faith_groups=[round(f, 3) for f in fids], faith_min=round(min(fids), 3),
+    res = dict(task=task_name, k=k, faith_groups=[round(f, 3) for f in fids], faith_min=round(min(fids), 3),
                drop_mean=float(drops.mean()), drop_median=float(np.median(drops)),
                surplus=int((drops < eps).sum()), surplus_frac=float((drops < eps).mean()),
                random_mean=float(np.mean(rand)), random_max=float(np.max(rand)), so_mlps=float(so_mlps),
@@ -1523,7 +1523,7 @@ def new_task(m, task_name, gold=None, verbose=True, **kw):
     r = analyze(m, task_name, prune=False, verbose=False, **kw)
     v = validate_circuit(m, task_name, r=r, verbose=False)
     core = [name(c) for c in r["core"]["heads"]]; circ = [name(c) for c in r["circuit"]["heads"]]
-    res = dict(get_task=task_name, accuracy=ac, core=core, mlps_core=r["core"]["mlps"], circuit=circ,
+    res = dict(task=task_name, accuracy=ac, core=core, mlps_core=r["core"]["mlps"], circuit=circ,
                validation=v, elapsed=round(time.time() - t0, 1))
     if gold:
         res["gold"] = {h: ("core" if h in core else f"circuit (#{circ.index(h) + 1})" if h in circ else "OUT") for h in gold}
