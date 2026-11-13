@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "headhunter-circuits"
-version = "0.11.5"
+version = "0.12.0"
 description = "HeadHunter: find sufficient circuits (attention heads, MLPs, edges) in transformers at a cost that does not grow with the number of heads"
 readme = "README.md"
 requires-python = ">=3.10"

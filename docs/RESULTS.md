@@ -1,4 +1,6 @@
-# Results and caveats (HeadHunter v0.11.5, up to 12/11/2026)
+# Results and caveats (HeadHunter v0.11.5, up to 2026-11-12)
+
+> These numbers were produced with v0.11.x, whose API was in Portuguese (tag `v0.11.5`). v0.12.0 only renames the API: on tiny MHA and GQA models every public function returns the same values as v0.11.5 (1,537 values compared, 0 differences apart from wall-clock time).
 
 All numbers come from our research log; predictions were written before each run and are scored honestly below. Everything is single-run unless a spread is given. Hardware: Colab T4 (≤ 1.5B), RunPod A100 80 GB (3B-7B), RTX PRO 6000 96 GB (14B), RTX A6000 48 GB (MIB bf16, necessity-vs-sufficiency at 7B, and the final cost/equivalence tests at 0.5B-7B).
 
@@ -27,10 +29,10 @@ Necessity = heads that must be mean-ablated, in order of individual damage, to r
 |---|---|---|---|---|---|
 | Qwen2.5-7B IOI | 100% | 13 (5) | 11 | 84/784 (10.7%) | 90% / 0% |
 | Qwen2.5-7B CAP | 98% | 15 by logit (5 for 50%; 7 by probability) | 1 | 29/784 (3.7%) | 92% / 0% |
-| Qwen2.5-7B COPIA | 100% | 14 (9) | 4 | 106/784 (13.5%) | not validated |
+| Qwen2.5-7B COPY | 100% | 14 (9) | 4 | 106/784 (13.5%) | not validated |
 | Pythia-6.9B IOI | 100% | 14 (8) | 7 | 129/1,024 (12.6%) | 91% / 2% |
 | Pythia-6.9B CAP | 100% | 50 by logit (10 for 50%; 1,023 by probability, a metric artifact) | 4 | 21/1,024 (2.1%) | 92% / 1% |
-| Pythia-6.9B COPIA | 100% | 43 (18) | 0 | 206/1,024 (20.1%) | not validated |
+| Pythia-6.9B COPY | 100% | 43 (18) | 0 | 206/1,024 (20.1%) | not validated |
 
 Caveats: one model per architecture, so the Qwen/Pythia gap cannot be assigned to GQA vs MHA (data, size and depth differ). IOI accuracy is scored as logit(IO) > logit(S), because top-1 over the whole vocabulary is near 0 for these models (they predict " each", " a"); we first used top-1 and the IOI runs were skipped, which was a design error of ours, now fixed. About 48% (Qwen) and 50% (Pythia) of sampled IOI circuit heads change faithfulness by less than 0.5 points when removed one at a time, so the circuits are sufficient but not shown to be minimal. **Correction (12/11):** the Pythia CAP necessity of 1,023 heads came from measuring damage on the answer *probability*, which saturates (p goes 0.887 → 0.020 only when nearly everything is ablated; the denominator itself is stable at 0.866). Measured on the *logit difference* (12.00 → 0.28 with all heads ablated; binary accuracy 100% → 60%), 10 heads give 50% of the damage, 50 heads 80% and 100 heads 92%; 100 random heads give 0%. The same measurement on Qwen2.5-7B CAP (logit difference 11.52 → 0.47 with all heads ablated; binary accuracy 100% → 57%): 5 heads give 50% of the damage, 15 give 80% and 50 give 100%; 100 random heads give 4%. So by logit difference the two models differ by a factor of 2-3 (15 vs 50 heads for 80%), not by two orders of magnitude; the probability metric saturated only on Pythia (p0 0.89), where it was misleading. Necessity/sufficiency at 80%: Qwen 15/29 = 0.5, Pythia 50/21 = 2.4. IOI already uses the sigmoid of the logit difference. Pythia-12B was not run.
 
@@ -72,7 +74,7 @@ Two different 40-prompt samples agree with each other only at Spearman 0.72-0.78
 |---|---|---|
 | Official EAP-IG bf16, batch 10 | 10.0 s (9.9-10.1) | 4,075 MB |
 | Official EAP-IG fp32, batch 10 | 17.0 s (17.0-17.1) | 7,053 MB |
-| HeadHunter, no fusion (`LOTE_CALCULO=0`) | 8.8 s (8.1-9.6) | 3,355 MB |
+| HeadHunter, no fusion (`COMPUTE_BATCH=0` (`LOTE_CALCULO` in v0.11)) | 8.8 s (8.1-9.6) | 3,355 MB |
 | HeadHunter, fused chunk 20 or 40 (both give chunks [20, 20]) | 5.8 s / 5.7 s (5.5-5.8) | 6,493 MB |
 
 - Scores are identical to the unfused run (Spearman ≥ 0.9999999974 on all edge types), as expected: same computation.

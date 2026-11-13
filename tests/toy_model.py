@@ -6,9 +6,9 @@ from tokenizers import Tokenizer, models, pre_tokenizers
 from transformers import PreTrainedTokenizerFast
 from transformer_lens import HookedTransformer, HookedTransformerConfig
 
-NOMES = ["Mary", "John", "Tom", "James", "Dan", "Sid", "Martin", "Amy", "Kate", "Paul", "Lisa", "Mark"]
+NAMES = ["Mary", "John", "Tom", "James", "Dan", "Sid", "Martin", "Amy", "Kate", "Paul", "Lisa", "Mark"]
 FILL = ["a", "the", "at", "to", "of", "and", "then", "had", "fun", "store", "school", "drink", "ring", "gave", "went", "when", ",", ".", "?"]
-VOC = ["<|endoftext|>", "<unk>"] + NOMES + FILL
+VOC = ["<|endoftext|>", "<unk>"] + NAMES + FILL
 
 
 def tokenizer():

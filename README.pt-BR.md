@@ -4,7 +4,7 @@
 
 O HeadHunter encontra um **circuito suficiente** num transformer: as cabeças de atenção, os MLPs e as arestas que, mantidos sozinhos, reproduzem uma tarefa (IOI, capitais, cópia de sequência, Greater-Than, múltipla escolha). Ele usa o gradiente barato (EAP-IG) em tudo e gasta o patching exato só onde a aproximação comprovadamente falha. O circuito é **validado em frases novas**, que não foram usadas para montá-lo.
 
-> **Status: código de pesquisa, versão 0.11.5.** Um relatório (arXiv / Alignment Forum) está em preparação.
+> **Status: código de pesquisa, versão 0.12.0.** Um relatório (arXiv / Alignment Forum) está em preparação. A v0.12 passou toda a API para inglês; a versão antiga, em português, continua na tag `v0.11.5`.
 
 ## Instalar
 
@@ -18,11 +18,11 @@ Ou a partir de um clone: `pip install -e .` e `python -m pytest tests -q` (teste
 
 ```python
 import headhunter as hh
-m = hh.carregar("gpt2-small")          # ou um id do Hugging Face, ex. "Qwen/Qwen2.5-0.5B"
-hh.autoteste(m, "IOI")
-r = hh.analisar(m, "IOI")              # núcleo, circuito até 90% de fidelidade, arestas
-print(r["circuito"]["cabecas"])        # índice da cabeça = camada * n_cabeças + cabeça
-v = hh.validar_circuito(m, "IOI", r)   # frases novas, circuitos aleatórios, só MLPs
+m = hh.load_model("gpt2-small")          # ou um id do Hugging Face, ex. "Qwen/Qwen2.5-0.5B"
+hh.selftest(m, "IOI")
+r = hh.analyze(m, "IOI")                # núcleo, circuito até 90% de fidelidade, arestas
+print(r["circuit"]["heads"])           # índice da cabeça = camada * n_cabeças + cabeça
+v = hh.validate_circuit(m, "IOI", r)   # frases novas, circuitos aleatórios, só MLPs
 ```
 
 ## Resultados e limites

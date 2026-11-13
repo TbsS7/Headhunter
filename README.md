@@ -1,10 +1,12 @@
 # HeadHunter
 
+[![tests](https://github.com/TbsS7/Headhunter/actions/workflows/tests.yml/badge.svg)](https://github.com/TbsS7/Headhunter/actions/workflows/tests.yml)
+
 *Português: [README.pt-BR.md](README.pt-BR.md)*
 
 HeadHunter finds a **sufficient circuit** in a transformer: the attention heads, MLPs and edges that, kept alone, reproduce a task (IOI, capitals, sequence copying, Greater-Than, multiple choice). It uses cheap gradient attributions (EAP-IG) everywhere and spends exact activation patching only where the approximation is known to fail. The circuit is then **validated on prompts it was not built on**.
 
-> **Status: research code, version 0.11.5.** A paper draft is in preparation (arXiv / Alignment Forum). Function names are in Portuguese (see the glossary below).
+> **Status: research code, version 0.12.0.** A paper draft is in preparation (arXiv / Alignment Forum). v0.12 renamed the whole API to English; the earlier Portuguese version stays available as tag `v0.11.5`.
 
 ## Install
 
@@ -21,26 +23,26 @@ Needs `transformer_lens < 4` (tested with 3.9). HeadHunter runs in **float32** b
 ```python
 import headhunter as hh
 
-m = hh.carregar("gpt2-small")        # or a Hugging Face id such as "Qwen/Qwen2.5-0.5B"
-hh.autoteste(m, "IOI")               # sanity checks of the machinery on this model
+m = hh.load_model("gpt2-small")        # or a Hugging Face id such as "Qwen/Qwen2.5-0.5B"
+hh.selftest(m, "IOI")               # sanity checks of the machinery on this model
 
-r = hh.analisar(m, "IOI")            # core, circuit by binary search to 90% faithfulness, edges
-print(r["circuito"]["cabecas"])      # flat head index = layer * n_heads + head
-print(r["circuito"]["fidelidade"], r["nucleo"]["cabecas"])
+r = hh.analyze(m, "IOI")              # core, circuit by binary search to 90% faithfulness, edges
+print(r["circuit"]["heads"])         # flat head index = layer * n_heads + head
+print(r["circuit"]["faithfulness"], r["core"]["heads"])
 
-v = hh.validar_circuito(m, "IOI", r) # faithfulness on new prompts, random controls, MLP-only control
+v = hh.validate_circuit(m, "IOI", r) # faithfulness on new prompts, random controls, MLP-only control
 ```
 
-Tasks: `IOI`, `CAP` (capitals), `COPIA` (sequence copy), `GT` (Greater-Than), `MCQA`, plus alternative templates and corruptions. A task is a function `(model, seed, n) -> {tk, tkc, alvo, errado}`; register your own in `hh.RECEITAS`. A GPU is needed for anything beyond small models; see `examples/quickstart.py`.
+Tasks: `IOI`, `CAP` (capitals), `COPY` (sequence copy), `GT` (Greater-Than), `MCQA`, plus alternative templates and corruptions. A task is a function `(model, seed, n) -> {tk, tkc, target, wrong}`; register your own in `hh.RECIPES`. A GPU is needed for anything beyond small models; see `examples/quickstart.py`.
 
 | Function | Meaning |
 |---|---|
-| `carregar` | load a model (and its architecture adapter) |
-| `autoteste` | self-test: full circuit = full model, no NaN, gradient vs exact |
-| `analisar` | full pipeline: core, head order (EAP-IG), sufficient circuit, edges |
-| `validar_circuito` | held-out faithfulness, random circuits, MLP-only control |
-| `necessidade`, `necessidade_x_suficiencia` | necessity (mean ablation) vs sufficiency |
-| `generalizacao` | does the circuit transfer to new prompt templates? |
+| `load_model` | load a model (and its architecture adapter) |
+| `selftest` | self-test: full circuit = full model, no NaN, gradient vs exact |
+| `analyze` | full pipeline: core, head order (EAP-IG), sufficient circuit, edges |
+| `validate_circuit` | held-out faithfulness, random circuits, MLP-only control |
+| `necessity`, `necessity_vs_sufficiency` | necessity (mean ablation) vs sufficiency |
+| `generalization` | does the circuit transfer to new prompt templates? |
 
 ## Results in short
 
@@ -64,8 +66,9 @@ Numbers, predictions and caveats are in [docs/RESULTS.md](docs/RESULTS.md).
 headhunter.py   the library (single file)
 tests/          CPU smoke tests
 examples/       minimal usage
-experiments/    notebook-cell scripts behind the reported runs (see its README)
+experiments/    notebook-cell scripts behind the reported runs (target v0.11.5; see its README)
 docs/           RESULTS.md
+CHANGELOG.md    what changed and how names were renamed
 ```
 
 ## License and citation

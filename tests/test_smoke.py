@@ -11,39 +11,39 @@ import toy_model
 
 def _prep(model):
     torch.manual_seed(0)
-    return hh.preparar(model)
+    return hh.prepare(model)
 
 
 def test_version():
-    assert hh.VERSAO == "0.11.5"
+    assert hh.VERSION == "0.12.0"
 
 
 def test_selftest_gqa():
-    assert bool(hh.autoteste(_prep(toy_model.gqa_model()), "IOI", n=10, verbose=False))
+    assert bool(hh.selftest(_prep(toy_model.gqa_model()), "IOI", n=10, verbose=False))
 
 
 def test_selftest_mha():
-    assert bool(hh.autoteste(_prep(toy_model.mha_model()), "IOI", n=10, verbose=False))
+    assert bool(hh.selftest(_prep(toy_model.mha_model()), "IOI", n=10, verbose=False))
 
 
 def test_analyze_gqa():
     m = _prep(toy_model.gqa_model())
-    r = hh.analisar(m, "IOI", podar=False, verbose=False)
+    r = hh.analyze(m, "IOI", prune=False, verbose=False)
     nL, nH = m.cfg.n_layers, m.cfg.n_heads
-    assert 0 < len(r["circuito"]["cabecas"]) <= nL * nH
-    assert all(0 <= c < nL * nH for c in r["circuito"]["cabecas"])
-    assert "nucleo" in r and "tempo" in r
+    assert 0 < len(r["circuit"]["heads"]) <= nL * nH
+    assert all(0 <= c < nL * nH for c in r["circuit"]["heads"])
+    assert "core" in r and "elapsed" in r
 
 
-def _notas(m, lc):
+def _scores(m, lc):
     import numpy as np
     nL, nH = m.cfg.n_layers, m.cfg.n_heads
-    ar = hh.arestas_partes(m, range(nL * nH), range(nL))
-    lot = [hh.montar_ioi(m, 100 + b, 10) for b in range(4)]
-    Cs = [hh.caches(m, T) for T in lot]
-    velho = hh.LOTE_CALCULO; hh.LOTE_CALCULO = lc
-    try: n = hh.notas_arestas(m, lot, Cs, ar, 5)
-    finally: hh.LOTE_CALCULO = velho
+    ar = hh.edge_parts(m, range(nL * nH), range(nL))
+    bat = [hh.build_ioi(m, 100 + b, 10) for b in range(4)]
+    Cs = [hh.caches(m, T) for T in bat]
+    old = hh.COMPUTE_BATCH; hh.COMPUTE_BATCH = lc
+    try: n = hh.edge_scores(m, bat, Cs, ar, 5)
+    finally: hh.COMPUTE_BATCH = old
     v = np.array([n[a] for a in ar]); return v[np.isfinite(v)]
 
 
@@ -52,32 +52,32 @@ def test_fused_chunk_same_scores():
     import numpy as np
     for mk in (toy_model.gqa_model, toy_model.mha_model):
         m = _prep(mk())
-        assert np.allclose(_notas(m, 0), _notas(m, 40), rtol=1e-4, atol=1e-6)
+        assert np.allclose(_scores(m, 0), _scores(m, 40), rtol=1e-4, atol=1e-6)
 
 
 def test_fused_chunk_oom_fallback():
     # if the big chunk runs out of memory, the chunk is halved and the result is unchanged
     import numpy as np
     m = _prep(toy_model.gqa_model())
-    ref = _notas(m, 0); g0 = hh.gradiente_entradas; tent = []
-    def falso(m_, T, C, al, alfas=(0.0,), lote=None):
-        tent.append(T["tk"].shape[0])
+    ref = _scores(m, 0); g0 = hh.input_gradients; tried = []
+    def fake(m_, T, C, al, alphas=(0.0,), batch=None):
+        tried.append(T["tk"].shape[0])
         if T["tk"].shape[0] > 20: raise torch.cuda.OutOfMemoryError("simulated")
-        return g0(m_, T, C, al, alfas, lote=lote)
-    hh.gradiente_entradas = falso
-    try: out = _notas(m, 40)
-    finally: hh.gradiente_entradas = g0
-    assert max(tent) == 40 and 20 in tent and np.allclose(ref, out, rtol=1e-4, atol=1e-6)
+        return g0(m_, T, C, al, alphas, batch=batch)
+    hh.input_gradients = fake
+    try: out = _scores(m, 40)
+    finally: hh.input_gradients = g0
+    assert max(tried) == 40 and 20 in tried and np.allclose(ref, out, rtol=1e-4, atol=1e-6)
 
 
 def test_fuse_never_exceeds_target():
     # v0.11.5: chunks hold at most `alvo` sentences (at least one batch), so a memory-based target is respected
     m = _prep(toy_model.gqa_model())
-    lot = [hh.montar_ioi(m, 100 + b, 10) for b in range(4)]
-    Cs = [hh.caches(m, T) for T in lot]
-    for alvo, esperado in ((10, [10] * 4), (25, [20, 20]), (40, [40]), (7, [10] * 4)):
-        L2, _ = hh._fundir_lotes(lot, Cs, alvo)
-        assert [T["tk"].shape[0] for T in L2] == esperado, (alvo, [T["tk"].shape[0] for T in L2])
+    bat = [hh.build_ioi(m, 100 + b, 10) for b in range(4)]
+    Cs = [hh.caches(m, T) for T in bat]
+    for target, expected in ((10, [10] * 4), (25, [20, 20]), (40, [40]), (7, [10] * 4)):
+        L2, _ = hh._merge_batches(bat, Cs, target)
+        assert [T["tk"].shape[0] for T in L2] == expected, (target, [T["tk"].shape[0] for T in L2])
 
 
 if __name__ == "__main__":
